@@ -6,6 +6,7 @@ import { CreateHabitVal, type CreateHabitInput, type ScheduleInput } from '../..
 import { apiFieldErrors, zodFieldErrors, type FieldErrors } from '../../lib/formErrors'
 import type { ScheduleType } from '../../api/types'
 import { Button, ErrorText, Field, Input, Page, PageTitle, Select, Textarea } from '../../components/ui'
+import { useToast } from '../../components/Toast'
 
 const WEEKDAYS: { value: number; label: string }[] = [
   { value: 0, label: 'Dom' },
@@ -26,6 +27,7 @@ export function HabitFormPage() {
   const isEditing = Boolean(id)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const toast = useToast()
 
   const { data: habits } = useQuery({
     queryKey: ['habits', 'mine'],
@@ -59,6 +61,7 @@ export function HabitFormPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['habits', 'mine'] })
+      toast(isEditing ? 'Hábito atualizado.' : 'Hábito criado.')
       navigate(isEditing ? `/habitos/${id}` : '/habitos')
     },
     onError: (error) => {

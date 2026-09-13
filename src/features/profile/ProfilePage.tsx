@@ -6,7 +6,9 @@ import { logout as logoutRequest } from '../../api/auth'
 import { UpdateUserVal } from '../../lib/schemas'
 import { apiFieldErrors, zodFieldErrors, type FieldErrors } from '../../lib/formErrors'
 import { useAuthStore } from '../auth/useAuthStore'
-import { Badge, Button, ErrorText, Field, Input, Page, PageTitle, SuccessText } from '../../components/ui'
+import { Badge, Button, ErrorText, Field, Input, Page, PageTitle } from '../../components/ui'
+import { useToast } from '../../components/Toast'
+import { useConfirm } from '../../components/ConfirmDialog'
 
 // A API nunca devolve `email`/`timezone` de volta em nenhuma resposta de
 // sessão (login/refresh só trazem id/name/role) — não tem como pré-popular
@@ -16,18 +18,19 @@ export function ProfilePage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const clearSession = useAuthStore((s) => s.clearSession)
+  const toast = useToast()
+  const confirm = useConfirm()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [general, setGeneral] = useState<string>()
-  const [success, setSuccess] = useState(false)
 
   const updateMutation = useMutation({
     mutationFn: (input: Parameters<typeof updateProfile>[1]) => updateProfile(user!.id, input),
     onSuccess: () => {
-      setSuccess(true)
+      toast('Dados atualizados.')
       setPassword('')
       setConfirmPassword('')
     },
@@ -47,11 +50,14 @@ export function ProfilePage() {
     },
   })
 
+  async function handleDelete() {
+    if (await confirm('Deletar sua conta? Essa ação não pode ser desfeita.')) deleteMutation.mutate()
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setFieldErrors({})
     setGeneral(undefined)
-    setSuccess(false)
 
     const payload: Record<string, string> = {}
     if (name.trim()) payload.name = name.trim()
@@ -99,7 +105,6 @@ export function ProfilePage() {
           </Field>
         )}
         {general && <ErrorText>{general}</ErrorText>}
-        {success && <SuccessText>Dados atualizados.</SuccessText>}
         <Button type="submit" disabled={updateMutation.isPending}>
           {updateMutation.isPending ? 'Salvando...' : 'Salvar alterações'}
         </Button>
@@ -107,12 +112,7 @@ export function ProfilePage() {
 
       <hr className="my-8 border-border" />
 
-      <Button
-        variant="danger"
-        onClick={() => {
-          if (confirm('Deletar sua conta? Essa ação não pode ser desfeita.')) deleteMutation.mutate()
-        }}
-      >
+      <Button variant="danger" onClick={handleDelete}>
         Deletar minha conta
       </Button>
     </Page>
