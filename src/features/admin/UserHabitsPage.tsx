@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { listCheckinsForUser, listHabitsForUser } from '../../api/habits'
 import { scheduleSummary } from '../habits/scheduleSummary'
-import { Card, Page, PageTitle } from '../../components/ui'
+import { Card, Page, PageTitle, Skeleton } from '../../components/ui'
 
 // Somente leitura: PATCH/DELETE de hábito continuam exclusivos do dono
 // (Desc/README.md — a tabela de rotas não dá admin como owner-or-admin pra
@@ -23,7 +23,12 @@ export function UserHabitsPage() {
   return (
     <Page>
       <PageTitle>Hábitos do usuário</PageTitle>
-      {isLoading && <p className="text-sm text-muted">Carregando...</p>}
+      {isLoading && (
+        <div className="mb-8 flex flex-col gap-3">
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+        </div>
+      )}
       <ul className="mb-8 flex flex-col gap-3">
         {habits?.map((h) => (
           <li key={h.id}>

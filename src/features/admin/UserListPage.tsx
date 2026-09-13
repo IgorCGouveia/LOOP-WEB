@@ -2,25 +2,39 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { deleteUser, listAllUsers } from '../../api/users'
 import { ApiError } from '../../api/envelope'
-import { useState } from 'react'
-import { Badge, ErrorText, Page, PageTitle } from '../../components/ui'
+import { Badge, Page, PageTitle, Skeleton } from '../../components/ui'
+import { useToast } from '../../components/Toast'
+import { useConfirm } from '../../components/ConfirmDialog'
 
 export function UserListPage() {
   const queryClient = useQueryClient()
-  const [error, setError] = useState<string>()
+  const toast = useToast()
+  const confirm = useConfirm()
   const { data: users, isLoading } = useQuery({ queryKey: ['admin', 'users'], queryFn: listAllUsers })
 
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
-    onError: (err) => setError(err instanceof ApiError ? err.message : 'Erro ao deletar usuário.'),
+    onSuccess: () => {
+      toast('Usuário deletado.')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+    onError: (err) => toast(err instanceof ApiError ? err.message : 'Erro ao deletar usuário.', 'error'),
   })
+
+  async function handleDelete(id: string, name: string) {
+    if (await confirm(`Deletar o usuário "${name}"?`)) deleteMutation.mutate(id)
+  }
 
   return (
     <Page className="max-w-3xl">
       <PageTitle>Usuários</PageTitle>
-      {isLoading && <p className="text-sm text-muted">Carregando...</p>}
-      {error && <div className="mb-4"><ErrorText>{error}</ErrorText></div>}
+      {isLoading && (
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-10" />
+          <Skeleton className="h-10" />
+          <Skeleton className="h-10" />
+        </div>
+      )}
       <table className="w-full border-collapse text-left text-sm">
         <thead>
           <tr className="border-b border-border text-muted">
@@ -45,9 +59,7 @@ export function UserListPage() {
               <td className="py-2 text-right">
                 {u.role !== 'ADMIN' && (
                   <button
-                    onClick={() => {
-                      if (confirm(`Deletar ${u.name}?`)) deleteMutation.mutate(u.id)
-                    }}
+                    onClick={() => handleDelete(u.id, u.name)}
                     className="text-danger underline decoration-danger/40 underline-offset-4 hover:text-danger-hover"
                   >
                     Deletar

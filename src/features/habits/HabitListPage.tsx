@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { listMyHabits } from '../../api/habits'
 import { scheduleSummary } from './scheduleSummary'
-import { Card, ErrorText, Page, PageTitle, linkButtonClass } from '../../components/ui'
+import { Card, EmptyState, Page, PageTitle, Skeleton, linkButtonClass } from '../../components/ui'
+import { AlertIcon, FlameIcon, InboxIcon, PlusIcon } from '../../components/icons'
 
 export function HabitListPage() {
   const { data: habits, isLoading, error } = useQuery({
@@ -14,15 +15,38 @@ export function HabitListPage() {
     <Page>
       <div className="mb-6 flex items-center justify-between">
         <PageTitle>Meus hábitos</PageTitle>
-        <Link to="/habitos/novo" className={linkButtonClass()}>
-          Novo hábito
+        <Link to="/habitos/novo" className={`${linkButtonClass()} flex items-center gap-1.5`}>
+          <PlusIcon width={16} height={16} /> Novo hábito
         </Link>
       </div>
 
-      {isLoading && <p className="text-sm text-muted">Carregando...</p>}
-      {error && <ErrorText>Não foi possível carregar seus hábitos.</ErrorText>}
+      {isLoading && (
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+        </div>
+      )}
+
+      {error && (
+        <EmptyState
+          icon={<AlertIcon width={28} height={28} />}
+          title="Não foi possível carregar seus hábitos"
+          description="Verifique sua conexão e tente de novo — a API pode estar em cold start (free tier), pode levar até 1 minuto."
+        />
+      )}
+
       {habits?.length === 0 && (
-        <p className="text-sm text-muted">Nenhum hábito ainda — crie o primeiro.</p>
+        <EmptyState
+          icon={<InboxIcon width={28} height={28} />}
+          title="Nenhum hábito ainda"
+          description="Crie o primeiro pra começar a acompanhar sua streak."
+          action={
+            <Link to="/habitos/novo" className={`${linkButtonClass()} mt-2`}>
+              Criar hábito
+            </Link>
+          }
+        />
       )}
 
       <ul className="flex flex-col gap-3">
@@ -32,7 +56,9 @@ export function HabitListPage() {
               <Card className="transition-colors hover:bg-surface-hover">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-text">{habit.name}</span>
-                  <span className="font-mono text-sm text-muted">🔥 {habit.longestStreak}</span>
+                  <span className="flex items-center gap-1 font-mono text-sm text-muted">
+                    <FlameIcon width={14} height={14} /> {habit.longestStreak}
+                  </span>
                 </div>
                 <p className="text-sm text-muted">{scheduleSummary(habit.schedule)}</p>
               </Card>

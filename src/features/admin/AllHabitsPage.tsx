@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { listAllHabits } from '../../api/habits'
 import { scheduleSummary } from '../habits/scheduleSummary'
-import { Page, PageTitle } from '../../components/ui'
+import { Page, PageTitle, Skeleton } from '../../components/ui'
 
 export function AllHabitsPage() {
   const { data: habits, isLoading } = useQuery({ queryKey: ['admin', 'habits', 'all'], queryFn: listAllHabits })
@@ -10,7 +10,13 @@ export function AllHabitsPage() {
   return (
     <Page className="max-w-3xl">
       <PageTitle>Todos os hábitos</PageTitle>
-      {isLoading && <p className="text-sm text-muted">Carregando...</p>}
+      {isLoading && (
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-10" />
+          <Skeleton className="h-10" />
+          <Skeleton className="h-10" />
+        </div>
+      )}
       <table className="w-full border-collapse text-left text-sm">
         <thead>
           <tr className="border-b border-border text-muted">

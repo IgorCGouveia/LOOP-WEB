@@ -7,6 +7,7 @@ export const buttonVariants = {
   primary: `${base} bg-accent text-white hover:bg-accent-hover inline-block`,
   secondary: `${base} border border-border bg-surface text-text hover:bg-surface-hover inline-block`,
   danger: `${base} text-danger hover:text-danger-hover underline decoration-danger/40 underline-offset-4`,
+  dangerSolid: `${base} bg-danger text-white hover:bg-danger-hover inline-block`,
   ghost: `${base} text-muted hover:text-text`,
 }
 
@@ -88,6 +89,39 @@ export function Stat({ label, value }: { label: string; value: number | string |
     <div className="rounded-md border border-border bg-bg px-2 py-3 text-center">
       <div className="font-mono text-lg font-semibold text-text">{value ?? '—'}</div>
       <div className="text-xs text-muted">{label}</div>
+    </div>
+  )
+}
+
+export function PageSpinner() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-accent" />
+    </div>
+  )
+}
+
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-md bg-surface-hover ${className}`} />
+}
+
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon?: ReactNode
+  title: string
+  description?: string
+  action?: ReactNode
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border px-6 py-12 text-center">
+      {icon && <div className="text-muted">{icon}</div>}
+      <p className="text-sm font-medium text-text">{title}</p>
+      {description && <p className="text-sm text-muted">{description}</p>}
+      {action}
     </div>
   )
 }
