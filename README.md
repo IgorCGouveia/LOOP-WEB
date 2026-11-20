@@ -44,7 +44,7 @@ npm run dev
 | `npm run build` | Checagem de tipos (`tsc -b`) + build de produção em `dist/` |
 | `npm run preview` | Serve o `dist/` localmente |
 | `npm run lint` | oxlint |
-| `npm test` | Vitest (ver [Problemas conhecidos](#problemas-conhecidos)) |
+| `npm test` | Vitest (jsdom + Testing Library; matchers do jest-dom registrados em `src/test/setup.ts`) |
 
 ## Estrutura
 
@@ -79,10 +79,6 @@ Regras que o código segue. Siga as mesmas ao mexer na UI:
 - Indique a página ativa da navegação com `aria-current`, usando o `NavLink` do React Router.
 
 Contexto no [ADR-0002](DECISIONS.md#adr-0002--rótulos-e-estado-ativo-acessíveis-na-navegação).
-
-## Problemas conhecidos
-
-- `vite.config.ts` aponta `test.setupFiles` pra `src/test/setup.ts`, mas esse arquivo não existe. Por isso o `npm test` ainda não roda.
 
 ## Documentação do projeto
 
