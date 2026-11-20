@@ -1,5 +1,4 @@
 Desc/
-*.md
 
 node_modules
 dist
