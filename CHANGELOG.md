@@ -11,6 +11,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e
 - Em telas abaixo de `sm`, os links da navegação e o botão "Sair" chegavam ao leitor de tela sem nome. Agora o rótulo fica oculto só visualmente (`sr-only`) e continua sendo anunciado ([#1](https://github.com/IgorCGouveia/LOOP-WEB/issues/1)).
 - O link da página atual agora expõe `aria-current="page"` ([#1](https://github.com/IgorCGouveia/LOOP-WEB/issues/1)).
 - Os ícones SVG passaram a ser decorativos (`aria-hidden`), então o leitor de tela não anuncia mais um gráfico vazio.
+- O `npm test` voltava erro porque o `src/test/setup.ts`, apontado em `vite.config.ts`, não existia. O arquivo foi criado e registra os matchers do jest-dom.
 
 ### Changed
 
@@ -19,6 +20,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e
 ### Added
 
 - `README.md`, `CHANGELOG.md` e `DECISIONS.md`.
+- Testes de regressão de acessibilidade da navegação (`src/routes/Nav.test.tsx`).
 
 ## [0.0.0] - 2026-09-12
 
