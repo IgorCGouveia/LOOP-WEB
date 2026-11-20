@@ -12,22 +12,15 @@ import { ProfilePage } from './features/profile/ProfilePage'
 import { UserListPage } from './features/admin/UserListPage'
 import { UserHabitsPage } from './features/admin/UserHabitsPage'
 import { AllHabitsPage } from './features/admin/AllHabitsPage'
-import { useAuthStore } from './features/auth/useAuthStore'
-import { refresh } from './api/auth'
+import { bootstrapSession } from './features/auth/bootstrap'
 
-// Boot da app: o accessToken só vive em memória (Zustand), então um F5
-// zera o store. O cookie httpOnly de refresh sobrevive — tentamos
-// /refresh uma vez antes de decidir se a sessão existe ou não, pra não
-// mandar direto pro login quem só recarregou a página.
+// Boot da app: tenta /refresh antes de decidir se a sessão existe — ver
+// src/features/auth/bootstrap.ts. O efeito duplo do StrictMode em dev
+// compartilha o mesmo POST /refresh (src/api/client.ts, refreshSession).
 function useBootstrapSession() {
-  const setSession = useAuthStore((s) => s.setSession)
-  const setStatus = useAuthStore((s) => s.setStatus)
-
   useEffect(() => {
-    refresh()
-      .then(setSession)
-      .catch(() => setStatus('guest'))
-  }, [setSession, setStatus])
+    void bootstrapSession()
+  }, [])
 }
 
 function AppRoutes() {

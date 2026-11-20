@@ -5,6 +5,8 @@
   --color-surface: #12151c;
   --color-surface-hover: #171b24;
   --color-border: #242832;
+  /* borda de campos de formulário: >= 3:1 contra bg e surface (WCAG 1.4.11) */
+  --color-border-strong: #5f6879;
   --color-text: #d7dae2;
   --color-muted: #868c99;
   --color-accent: #8b7bff;
@@ -35,13 +37,14 @@ select,
 textarea {
   background: var(--color-bg);
   color: var(--color-text);
-  border-color: var(--color-border);
+  border-color: var(--color-border-strong);
 }
 
 input:focus,
 select:focus,
 textarea:focus,
-button:focus-visible {
+button:focus-visible,
+a:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }

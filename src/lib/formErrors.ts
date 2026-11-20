@@ -27,3 +27,11 @@ export function apiFieldErrors(error: unknown): { fields: FieldErrors; general?:
   }
   return { fields, general }
 }
+
+// Rede de segurança: erro de campo que nenhum <Field> da tela renderiza vira
+// mensagem geral, pra nenhuma falha de validação ficar muda (#18).
+export function unmatchedFieldMessage(fields: FieldErrors, renderedKeys: readonly string[]): string | undefined {
+  const extra = Object.entries(fields).filter(([key]) => !renderedKeys.includes(key))
+  if (extra.length === 0) return undefined
+  return extra.map(([, message]) => message).join(' ')
+}

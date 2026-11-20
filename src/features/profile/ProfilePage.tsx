@@ -1,36 +1,46 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
 import { deleteAccount, updateProfile } from '../../api/users'
-import { logout as logoutRequest } from '../../api/auth'
+import { ApiError } from '../../api/envelope'
 import { UpdateUserVal } from '../../lib/schemas'
 import { apiFieldErrors, zodFieldErrors, type FieldErrors } from '../../lib/formErrors'
 import { useAuthStore } from '../auth/useAuthStore'
-import { Badge, Button, ErrorText, Field, Input, Page, PageTitle } from '../../components/ui'
+import { useLogout } from '../auth/useLogout'
+import { Badge, Button, Field, FormError, Input, Page, PageHeader } from '../../components/ui'
 import { useToast } from '../../components/Toast'
 import { useConfirm } from '../../components/ConfirmDialog'
+import { usePageTitle } from '../../lib/usePageTitle'
+import { useFocusFirstInvalid } from '../../lib/useFocusFirstInvalid'
 
 // A API nunca devolve `email`/`timezone` de volta em nenhuma resposta de
 // sessão (login/refresh só trazem id/name/role) — não tem como pré-popular
 // esses campos. Por isso o form é "deixe em branco pra manter": só o que
 // for preenchido entra no PATCH parcial.
 export function ProfilePage() {
-  const navigate = useNavigate()
+  usePageTitle('Minha conta')
   const user = useAuthStore((s) => s.user)
-  const clearSession = useAuthStore((s) => s.clearSession)
+  const updateUser = useAuthStore((s) => s.updateUser)
+  const { logout, isPending: logoutPending } = useLogout()
   const toast = useToast()
   const confirm = useConfirm()
+  const formRef = useRef<HTMLFormElement>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [general, setGeneral] = useState<string>()
+  useFocusFirstInvalid(formRef, fieldErrors)
 
   const updateMutation = useMutation({
     mutationFn: (input: Parameters<typeof updateProfile>[1]) => updateProfile(user!.id, input),
-    onSuccess: () => {
+    onSuccess: (updated) => {
+      // O store é o único dono do usuário no client: sem isto o cabeçalho
+      // mostrava o nome antigo até o próximo reload (#26).
+      updateUser({ name: updated.name })
       toast('Dados atualizados.')
+      setName('')
+      setEmail('')
       setPassword('')
       setConfirmPassword('')
     },
@@ -43,14 +53,16 @@ export function ProfilePage() {
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteAccount(user!.id),
-    onSuccess: async () => {
-      await logoutRequest().catch(() => {})
-      clearSession()
-      navigate('/login')
-    },
+    // Mesmo helper do "Sair" (#5): se o /logout falhar, a pessoa fica aqui com
+    // um retry em vez de ver um login que um reload desfaria.
+    onSuccess: () => logout('Conta deletada, mas não foi possível encerrar a sessão neste navegador.'),
+    onError: (error) => toast(error instanceof ApiError ? error.message : 'Erro ao deletar conta.', 'error'),
   })
 
+  const deleting = deleteMutation.isPending || logoutPending
+
   async function handleDelete() {
+    if (deleting) return
     if (await confirm('Deletar sua conta? Essa ação não pode ser desfeita.')) deleteMutation.mutate()
   }
 
@@ -66,7 +78,10 @@ export function ProfilePage() {
       payload.password = password
       payload.confirmPassword = confirmPassword
     }
-    if (Object.keys(payload).length === 0) return
+    if (Object.keys(payload).length === 0) {
+      setGeneral('Preencha ao menos um campo para atualizar.')
+      return
+    }
 
     const parsed = UpdateUserVal.safeParse(payload)
     if (!parsed.success) {
@@ -79,13 +94,17 @@ export function ProfilePage() {
   if (!user) return null
 
   return (
-    <Page className="max-w-sm">
-      <PageTitle>Minha conta</PageTitle>
-      <p className="mb-6 flex items-center gap-2 text-sm text-muted">
-        {user.name} <Badge>{user.role === 'ADMIN' ? 'admin' : 'user'}</Badge>
-      </p>
+    <Page width="sm">
+      <PageHeader
+        title="Minha conta"
+        subtitle={
+          <p className="flex items-center gap-2">
+            {user.name} <Badge>{user.role === 'ADMIN' ? 'admin' : 'user'}</Badge>
+          </p>
+        }
+      />
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <Field label="Nome (deixe em branco pra manter)" error={fieldErrors.name}>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
@@ -104,7 +123,7 @@ export function ProfilePage() {
             />
           </Field>
         )}
-        {general && <ErrorText>{general}</ErrorText>}
+        {general && <FormError>{general}</FormError>}
         <Button type="submit" disabled={updateMutation.isPending}>
           {updateMutation.isPending ? 'Salvando...' : 'Salvar alterações'}
         </Button>
@@ -112,8 +131,8 @@ export function ProfilePage() {
 
       <hr className="my-8 border-border" />
 
-      <Button variant="danger" onClick={handleDelete}>
-        Deletar minha conta
+      <Button variant="danger" onClick={handleDelete} disabled={deleting}>
+        {deleting ? 'Deletando...' : 'Deletar minha conta'}
       </Button>
     </Page>
   )
