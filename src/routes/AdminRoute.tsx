@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../features/auth/useAuthStore'
 import { PageSpinner } from '../components/ui'
+import { SessionUnreachable } from './ProtectedRoute'
 
 // Checagem client-side é só UX (evita renderizar a tela pra quem não vai
 // conseguir usar) — a API já resolve ownership/role de novo no servidor
@@ -10,7 +11,8 @@ export function AdminRoute() {
   const status = useAuthStore((s) => s.status)
   const role = useAuthStore((s) => s.user?.role)
 
-  if (status === 'checking') return <PageSpinner />
+  if (status === 'checking') return <PageSpinner label="Verificando sessão..." />
+  if (status === 'unreachable') return <SessionUnreachable />
   if (status === 'guest') return <Navigate to="/login" replace />
   if (role !== 'ADMIN') return <Navigate to="/habitos" replace />
   return <Outlet />

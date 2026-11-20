@@ -2,38 +2,34 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { listMyHabits } from '../../api/habits'
 import { scheduleSummary } from './scheduleSummary'
-import { Card, EmptyState, Page, PageTitle, Skeleton, linkButtonClass } from '../../components/ui'
-import { AlertIcon, FlameIcon, InboxIcon, PlusIcon } from '../../components/icons'
+import { Card, EmptyState, Page, PageHeader, QueryError, SkeletonList, linkButtonClass } from '../../components/ui'
+import { FlameIcon, InboxIcon, PlusIcon } from '../../components/icons'
+import { queryKeys, useSessionUserId } from '../../lib/queryKeys'
+import { usePageTitle } from '../../lib/usePageTitle'
 
 export function HabitListPage() {
-  const { data: habits, isLoading, error } = useQuery({
-    queryKey: ['habits', 'mine'],
+  usePageTitle('Meus hábitos')
+  const uid = useSessionUserId()
+  const { data: habits, isPending, isError, error, refetch } = useQuery({
+    queryKey: queryKeys.myHabits(uid),
     queryFn: listMyHabits,
   })
 
   return (
     <Page>
-      <div className="mb-6 flex items-center justify-between">
-        <PageTitle>Meus hábitos</PageTitle>
-        <Link to="/habitos/novo" className={`${linkButtonClass()} flex items-center gap-1.5`}>
-          <PlusIcon width={16} height={16} /> Novo hábito
-        </Link>
-      </div>
+      <PageHeader
+        title="Meus hábitos"
+        actions={
+          <Link to="/habitos/novo" className={linkButtonClass()}>
+            <PlusIcon width={16} height={16} /> Novo hábito
+          </Link>
+        }
+      />
 
-      {isLoading && (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-        </div>
-      )}
+      {isPending && <SkeletonList size="card" label="Carregando hábitos..." />}
 
-      {error && (
-        <EmptyState
-          icon={<AlertIcon width={28} height={28} />}
-          title="Não foi possível carregar seus hábitos"
-          description="Verifique sua conexão e tente de novo — a API pode estar em cold start (free tier), pode levar até 1 minuto."
-        />
+      {isError && (
+        <QueryError title="Não foi possível carregar seus hábitos" error={error} onRetry={() => void refetch()} />
       )}
 
       {habits?.length === 0 && (
@@ -49,23 +45,26 @@ export function HabitListPage() {
         />
       )}
 
-      <ul className="flex flex-col gap-3">
-        {habits?.map((habit) => (
-          <li key={habit.id}>
-            <Link to={`/habitos/${habit.id}`}>
-              <Card className="transition-colors hover:bg-surface-hover">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-text">{habit.name}</span>
-                  <span className="flex items-center gap-1 font-mono text-sm text-muted">
-                    <FlameIcon width={14} height={14} /> {habit.longestStreak}
-                  </span>
-                </div>
-                <p className="text-sm text-muted">{scheduleSummary(habit.schedule)}</p>
-              </Card>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {!isError && habits && habits.length > 0 && (
+        <ul className="flex flex-col gap-3">
+          {habits.map((habit) => (
+            <li key={habit.id}>
+              <Link to={`/habitos/${habit.id}`} className="block rounded-lg">
+                <Card className="transition-colors hover:bg-surface-hover">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-text">{habit.name}</span>
+                    <span className="flex items-center gap-1 font-mono text-sm text-muted">
+                      <FlameIcon width={14} height={14} />
+                      <span className="sr-only">Recorde:</span> {habit.longestStreak}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted">{scheduleSummary(habit.schedule)}</p>
+                </Card>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </Page>
   )
 }

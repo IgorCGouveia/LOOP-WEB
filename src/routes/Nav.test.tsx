@@ -3,12 +3,15 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Nav } from './Nav'
 import { useAuthStore } from '../features/auth/useAuthStore'
+import { ToastProvider } from '../components/Toast'
 
 function renderAt(path: string) {
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Nav />
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <Nav />
+      </MemoryRouter>
+    </ToastProvider>,
   )
 }
 

@@ -1,7 +1,7 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuthStore } from '../features/auth/useAuthStore'
-import { logout } from '../api/auth'
+import { useLogout } from '../features/auth/useLogout'
 import { LogOutIcon, ListIcon, UserIcon, UsersIcon } from '../components/icons'
 
 // Below `sm` the label is visually hidden but kept in the accessibility tree,
@@ -28,18 +28,11 @@ function NavItem({ to, end, children, icon }: { to: string; end?: boolean; child
 }
 
 export function Nav() {
-  const navigate = useNavigate()
   const status = useAuthStore((s) => s.status)
   const user = useAuthStore((s) => s.user)
-  const clearSession = useAuthStore((s) => s.clearSession)
+  const { logout, isPending } = useLogout()
 
   if (status !== 'authenticated' || !user) return null
-
-  async function handleLogout() {
-    await logout().catch(() => {})
-    clearSession()
-    navigate('/login')
-  }
 
   return (
     <nav className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-border bg-bg/80 px-4 py-3 text-sm backdrop-blur">
@@ -67,11 +60,12 @@ export function Nav() {
       </div>
       <button
         type="button"
-        onClick={handleLogout}
-        className="flex shrink-0 items-center gap-1.5 text-muted hover:text-text"
+        onClick={() => void logout()}
+        disabled={isPending}
+        className="flex shrink-0 items-center gap-1.5 text-muted hover:text-text disabled:opacity-50"
       >
         <LogOutIcon width={16} height={16} />
-        <span className={responsiveLabel}>Sair</span>
+        <span className={responsiveLabel}>{isPending ? 'Saindo...' : 'Sair'}</span>
       </button>
     </nav>
   )

@@ -44,17 +44,21 @@ export const UpdateUserVal = z
   })
 export type UpdateUserInput = z.infer<typeof UpdateUserVal>
 
+// Campo numérico vazio vira 0 (Number('')): a mensagem precisa fazer sentido
+// pro usuário, não o texto padrão do Zod em inglês (#18).
+const positiveInt = z.number().int('Use um número inteiro.').positive('Informe um número maior que zero.')
+
 export const ScheduleVal = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('DAILY'), targetPerDay: z.number().int().positive() }),
+  z.object({ type: z.literal('DAILY'), targetPerDay: positiveInt }),
   z.object({
     type: z.literal('WEEKLY'),
-    targetPerDay: z.number().int().positive(),
+    targetPerDay: positiveInt,
     daysOfWeek: z.array(z.number().int().min(0).max(6)).min(1, 'Selecione ao menos um dia.'),
   }),
   z.object({
     type: z.literal('INTERVAL'),
-    targetPerDay: z.number().int().positive(),
-    intervalDays: z.number().int().positive(),
+    targetPerDay: positiveInt,
+    intervalDays: positiveInt,
   }),
 ])
 export type ScheduleInput = z.infer<typeof ScheduleVal>
@@ -69,9 +73,10 @@ export type CreateHabitInput = z.infer<typeof CreateHabitVal>
 // name/description continuam parciais; `schedule`, se vier, tem que ser o
 // objeto inteiro (Desc/DECISIONS.md, 2026-09-04) — por isso não é
 // `ScheduleVal.partial()`, é o mesmo `ScheduleVal` opcional na chave.
+// `description: null` limpa a descrição; ausente mantém a atual (#21, ADR-0008).
 export const UpdateHabitVal = z.object({
   name: CreateHabitVal.shape.name.optional(),
-  description: CreateHabitVal.shape.description,
+  description: z.string().max(250, 'Máximo 250 caracteres.').nullable().optional(),
   schedule: ScheduleVal.optional(),
 })
 export type UpdateHabitInput = z.infer<typeof UpdateHabitVal>
