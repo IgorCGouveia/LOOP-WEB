@@ -1,8 +1,12 @@
 import type { SVGProps } from 'react'
 
+// Icons are decorative by default: every current use sits next to visible text.
+// For a standalone meaningful icon, pass aria-hidden={false} plus role="img" and aria-label.
 function Icon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
+      aria-hidden
+      focusable="false"
       width={18}
       height={18}
       viewBox="0 0 24 24"

@@ -1,22 +1,29 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuthStore } from '../features/auth/useAuthStore'
 import { logout } from '../api/auth'
 import { LogOutIcon, ListIcon, UserIcon, UsersIcon } from '../components/icons'
 
-function NavLink({ to, children, icon }: { to: string; children: ReactNode; icon: ReactNode }) {
-  const { pathname } = useLocation()
-  const active = pathname === to || (to !== '/habitos' && pathname.startsWith(to))
+// Below `sm` the label is visually hidden but kept in the accessibility tree,
+// so the link's accessible name is always the same text sighted users see.
+const responsiveLabel = 'sr-only sm:not-sr-only'
+
+function NavItem({ to, end, children, icon }: { to: string; end?: boolean; children: ReactNode; icon: ReactNode }) {
+  // NavLink sets aria-current="page" from the same match that drives the styling,
+  // so the visual and the announced active state cannot drift apart.
   return (
-    <Link
+    <NavLink
       to={to}
-      className={`flex items-center gap-1.5 border-b-2 py-1 transition-colors ${
-        active ? 'border-accent text-text' : 'border-transparent text-muted hover:text-text'
-      }`}
+      end={end}
+      className={({ isActive }) =>
+        `flex items-center gap-1.5 border-b-2 py-1 transition-colors ${
+          isActive ? 'border-accent text-text' : 'border-transparent text-muted hover:text-text'
+        }`
+      }
     >
       {icon}
-      <span className="hidden sm:inline">{children}</span>
-    </Link>
+      <span className={responsiveLabel}>{children}</span>
+    </NavLink>
   )
 }
 
@@ -40,26 +47,31 @@ export function Nav() {
         <Link to="/habitos" className="shrink-0 font-mono font-semibold text-text">
           loop
         </Link>
-        <NavLink to="/habitos" icon={<ListIcon width={16} height={16} />}>
+        {/* `end`: keeps today's behavior where "Hábitos" is active only on the list itself. */}
+        <NavItem to="/habitos" end icon={<ListIcon width={16} height={16} />}>
           Hábitos
-        </NavLink>
-        <NavLink to="/perfil" icon={<UserIcon width={16} height={16} />}>
+        </NavItem>
+        <NavItem to="/perfil" icon={<UserIcon width={16} height={16} />}>
           Minha conta
-        </NavLink>
+        </NavItem>
         {user.role === 'ADMIN' && (
           <>
-            <NavLink to="/admin/usuarios" icon={<UsersIcon width={16} height={16} />}>
+            <NavItem to="/admin/usuarios" icon={<UsersIcon width={16} height={16} />}>
               Usuários
-            </NavLink>
-            <NavLink to="/admin/habitos" icon={<ListIcon width={16} height={16} />}>
+            </NavItem>
+            <NavItem to="/admin/habitos" icon={<ListIcon width={16} height={16} />}>
               Todos hábitos
-            </NavLink>
+            </NavItem>
           </>
         )}
       </div>
-      <button onClick={handleLogout} className="flex shrink-0 items-center gap-1.5 text-muted hover:text-text">
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="flex shrink-0 items-center gap-1.5 text-muted hover:text-text"
+      >
         <LogOutIcon width={16} height={16} />
-        <span className="hidden sm:inline">Sair</span>
+        <span className={responsiveLabel}>Sair</span>
       </button>
     </nav>
   )
